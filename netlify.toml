@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Client-side routes such as /login have no file on disk.
+# Serve the Vite app for those paths so a refresh still loads React.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
