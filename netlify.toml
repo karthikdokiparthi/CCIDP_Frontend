@@ -2,9 +2,7 @@
   command = "npm run build"
   publish = "dist"
 
-# Client-side routes such as /login have no file on disk.
-# Serve the Vite app for those paths so a refresh still loads React.
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Set in Netlify → Site configuration → Environment variables, then Redeploy:
+#   VITE_API_BASE_URL = https://YOUR_PUBLIC_API_HOST/ccidp
+# Optional same-origin proxy (API must be HTTPS):
+#   CCIDP_API_ORIGIN  = https://YOUR_PUBLIC_API_HOST

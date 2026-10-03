@@ -1,4 +1,5 @@
 import { BrandLockup } from './BrandLockup';
+import { ApiBaseField } from './ApiBaseField';
 
 export function AuthCard({ title, lead, children, footer }) {
   return (
@@ -8,6 +9,7 @@ export function AuthCard({ title, lead, children, footer }) {
         {title ? <h1>{title}</h1> : null}
         {lead ? <p className="lead">{lead}</p> : null}
         {children}
+        <ApiBaseField />
         {footer}
       </div>
     </div>

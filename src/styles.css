@@ -218,6 +218,21 @@ p {
   font-size: 13px;
 }
 
+.api-base-details {
+  margin-top: 18px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.api-base-details summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+.api-base-details .field {
+  margin-top: 10px;
+}
+
 .menu-toggle,
 .sidebar-overlay,
 .btn.sidebar-close,

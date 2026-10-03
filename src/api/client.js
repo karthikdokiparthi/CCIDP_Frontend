@@ -6,14 +6,73 @@ const REFRESH_KEY = 'ccidp.refreshToken';
 const USER_KEY = 'ccidp.user';
 const RETURN_KEY = 'ccidp.returnTo';
 const EXPIRED_KEY = 'ccidp.sessionExpired';
+const API_BASE_KEY = 'ccidp.apiBaseUrl';
 
 let accessToken = null;
 let refreshPromise = null;
 let endingSession = false;
 
-/** Origin + optional servlet context (`/ccidp`). Empty = same-origin Vite/nginx proxy. */
+function trimBase(value) {
+  return String(value || '').trim().replace(/\/$/, '');
+}
+
+function bakedApiBase() {
+  return trimBase(import.meta.env.VITE_API_BASE_URL);
+}
+
+/** True when this host is not localhost and the build has no absolute API URL. */
+export function needsExplicitApiHost() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return false;
+  }
+  return !/^https?:\/\//i.test(bakedApiBase());
+}
+
+export function getStoredApiBaseUrl() {
+  try {
+    return trimBase(localStorage.getItem(API_BASE_KEY));
+  } catch {
+    return '';
+  }
+}
+
+export function setStoredApiBaseUrl(value) {
+  const next = trimBase(value);
+  try {
+    if (next) {
+      localStorage.setItem(API_BASE_KEY, next);
+    } else {
+      localStorage.removeItem(API_BASE_KEY);
+    }
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+/**
+ * Origin + optional servlet context (`/ccidp`).
+ * Order: runtime script, localStorage (Netlify), Vite env, then `/ccidp`.
+ */
 export function apiOrigin() {
-  return String(import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
+  if (typeof window !== 'undefined') {
+    const runtime = trimBase(window.__CCIDP_API_BASE_URL__);
+    if (runtime) {
+      return runtime;
+    }
+    const stored = getStoredApiBaseUrl();
+    if (stored) {
+      return stored;
+    }
+  }
+  const baked = bakedApiBase();
+  if (baked) {
+    return baked;
+  }
+  return '/ccidp';
 }
 
 function apiPath(path) {
@@ -23,7 +82,6 @@ function apiPath(path) {
 }
 
 export const api = axios.create({
-  baseURL: apiPath('/api/v1'),
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -161,6 +219,7 @@ async function ensureFreshAccessToken() {
 }
 
 api.interceptors.request.use(async (config) => {
+  config.baseURL = apiPath('/api/v1');
   const url = config.url || '';
   if (!isAuthSkip(url) && getStoredRefreshToken()) {
     try {
@@ -204,7 +263,20 @@ export function extractError(error) {
   const data = error.response?.data;
   let apiMessage = '';
 
+  if (!error.response) {
+    return (
+      'Cannot reach the identity provider. Set the public API URL (https://…/ccidp) '
+      + 'and confirm the API is on HTTPS.'
+    );
+  }
+
   if (typeof data === 'string') {
+    if (/<!doctype html/i.test(data) || /<html[\s>]/i.test(data)) {
+      return (
+        'This site is not calling the Spring API. Set the backend URL to your public '
+        + 'CCIDP origin ending in /ccidp, then sign in again.'
+      );
+    }
     if (/invalid cors request/i.test(data)) {
       return 'This origin is not allowed. Check the identity provider CORS settings.';
     }
