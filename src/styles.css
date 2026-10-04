@@ -342,7 +342,14 @@ p {
   color: var(--danger-fg);
 }
 
-.topbar-signout:hover {
+.nav-logout {
+  display: none;
+  width: 100%;
+  color: var(--danger-fg);
+}
+
+.topbar-signout:hover,
+.nav-logout:hover {
   background: var(--danger-bg);
   color: var(--danger-fg);
 }
@@ -1634,6 +1641,10 @@ kbd {
 
   .nav-item {
     min-height: 44px;
+  }
+
+  .nav-logout {
+    display: flex;
   }
 
   .sidebar-overlay {
