@@ -353,7 +353,7 @@ export function AccountPage() {
       </div>
 
       <section className="panel" style={{ marginTop: 16 }}>
-        <div className="panel-pad" style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+        <div className="panel-pad panel-split">
           <div>
             <h2 className="panel-heading">This device and others</h2>
             <p className="muted">Sessions issued to your account.</p>
@@ -436,7 +436,7 @@ export function AccountPage() {
       </section>
 
       <section className="panel" style={{ marginTop: 16 }}>
-        <div className="panel-pad" style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+        <div className="panel-pad panel-split">
           <div>
             <h2 className="panel-heading">My audit activity</h2>
             <p className="muted">Latest events for this account.</p>
