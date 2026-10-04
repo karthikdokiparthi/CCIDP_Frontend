@@ -131,6 +131,9 @@ export function AppShell() {
               <div className="email">{user?.username}</div>
             </div>
             <div className="avatar">{initials(user)}</div>
+            <button className="btn btn-sm" type="button" onClick={logout}>
+              Sign out
+            </button>
           </div>
         </header>
         <main className="content">
