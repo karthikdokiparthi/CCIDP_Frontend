@@ -72,6 +72,9 @@ export function apiOrigin() {
   if (baked) {
     return baked;
   }
+  if (typeof window !== 'undefined' && window.location.hostname === 'brightgrid-ccipd.netlify.app') {
+    return 'https://git.brightgrid.in/ccidp';
+  }
   return '/ccidp';
 }
 

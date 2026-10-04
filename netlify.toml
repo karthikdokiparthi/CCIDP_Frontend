@@ -2,7 +2,6 @@
   command = "npm run build"
   publish = "dist"
 
-# Set in Netlify → Site configuration → Environment variables, then Redeploy:
-#   VITE_API_BASE_URL = https://YOUR_PUBLIC_API_HOST/ccidp
-# Optional same-origin proxy (API must be HTTPS):
-#   CCIDP_API_ORIGIN  = https://YOUR_PUBLIC_API_HOST
+[build.environment]
+  VITE_API_BASE_URL = "https://git.brightgrid.in/ccidp"
+  CCIDP_API_ORIGIN = "https://git.brightgrid.in"
