@@ -332,7 +332,7 @@ p {
   font-size: 11px;
 }
 
-.topbar-signout {
+.btn.topbar-signout {
   display: none;
   align-items: center;
   justify-content: center;
@@ -342,14 +342,14 @@ p {
   color: var(--danger-fg);
 }
 
-.nav-logout {
+.nav-item.nav-logout {
   display: none;
   width: 100%;
   color: var(--danger-fg);
 }
 
-.topbar-signout:hover,
-.nav-logout:hover {
+.btn.topbar-signout:hover,
+.nav-item.nav-logout:hover {
   background: var(--danger-bg);
   color: var(--danger-fg);
 }
@@ -1643,7 +1643,7 @@ kbd {
     min-height: 44px;
   }
 
-  .nav-logout {
+  .nav-item.nav-logout {
     display: flex;
   }
 
@@ -1835,7 +1835,11 @@ kbd {
     z-index: auto;
   }
 
-  .topbar-signout {
+  .btn.topbar-signout {
     display: inline-flex;
+  }
+
+  .nav-item.nav-logout {
+    display: none;
   }
 }
