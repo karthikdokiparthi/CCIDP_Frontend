@@ -30,3 +30,10 @@ export function isAccessTokenExpiring(token, skewMs = 60_000) {
   if (!expiry) return false;
   return Date.now() >= expiry - skewMs;
 }
+
+export function isAccessTokenExpired(token) {
+  if (!token) return true;
+  const expiry = getAccessTokenExpiryMs(token);
+  if (!expiry) return false;
+  return Date.now() >= expiry;
+}

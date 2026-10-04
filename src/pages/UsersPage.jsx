@@ -627,7 +627,7 @@ export function UsersPage() {
 
           <div className="section-title">Assign role</div>
           <p className="muted">
-            Self-signup accounts start with the standard USER role. Superadmin can grant ADMIN or SUPER_ADMIN here.
+            Superadmin sets one role per employee. Assigning a role replaces every previous role; only the new role remains.
           </p>
           <div className="toolbar">
             <select className="select" value={roleId} onChange={(e) => setRoleId(e.target.value)}>
@@ -645,11 +645,11 @@ export function UsersPage() {
               onClick={() =>
                 run(
                   () => assignUserRole(detail.id, roleId),
-                  'Role assigned. That person must sign in again for the new access to show.'
+                  'Role replaced. That person must sign in again. They now have only this role.'
                 )
               }
             >
-              Assign
+              Set role
             </button>
           </div>
           {(assignedRoles.length ? assignedRoles : []).map((role) => (

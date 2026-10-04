@@ -20,15 +20,10 @@ function bakedApiBase() {
   return trimBase(import.meta.env.VITE_API_BASE_URL);
 }
 
-/** True when this host is not localhost and the build has no absolute API URL. */
+const CLOUD_API_BASE = 'https://ccidp-backend.onrender.com';
+
+/** True when the build has no absolute API URL. */
 export function needsExplicitApiHost() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-  const host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1') {
-    return false;
-  }
   return !/^https?:\/\//i.test(bakedApiBase());
 }
 
@@ -54,28 +49,25 @@ export function setStoredApiBaseUrl(value) {
 }
 
 /**
- * Origin + optional servlet context (`/ccidp`).
- * Order: runtime script, localStorage (Netlify), Vite env, then `/ccidp`.
+ * Public Spring origin. Render serves the API at the host root (no /ccidp).
+ * Never localhost. Order: runtime script, localStorage, Vite env, then Render.
  */
 export function apiOrigin() {
   if (typeof window !== 'undefined') {
     const runtime = trimBase(window.__CCIDP_API_BASE_URL__);
-    if (runtime) {
+    if (runtime && /^https?:\/\//i.test(runtime) && !/localhost|127\.0\.0\.1/i.test(runtime)) {
       return runtime;
     }
     const stored = getStoredApiBaseUrl();
-    if (stored) {
+    if (stored && /^https?:\/\//i.test(stored) && !/localhost|127\.0\.0\.1/i.test(stored)) {
       return stored;
     }
   }
   const baked = bakedApiBase();
-  if (baked) {
+  if (baked && /^https?:\/\//i.test(baked) && !/localhost|127\.0\.0\.1/i.test(baked)) {
     return baked;
   }
-  if (typeof window !== 'undefined' && window.location.hostname === 'brightgrid-ccipd.netlify.app') {
-    return 'https://git.brightgrid.in/ccidp';
-  }
-  return '/ccidp';
+  return CLOUD_API_BASE;
 }
 
 function apiPath(path) {
@@ -160,6 +152,19 @@ export function expireSession() {
   }, 0);
 }
 
+/** Logout locally when the refresh token is missing but a session was stored. */
+export function logoutIfUnauthenticated() {
+  if (getStoredRefreshToken()) {
+    return false;
+  }
+  if (getAccessToken() || getStoredUser()) {
+    expireSession();
+    return true;
+  }
+  clearSession();
+  return false;
+}
+
 export function profileFromLogin(data) {
   return {
     userId: data.userId,
@@ -213,6 +218,10 @@ export async function refreshAccessToken() {
 
 async function ensureFreshAccessToken() {
   if (!getStoredRefreshToken()) {
+    if (accessToken || getStoredUser()) {
+      expireSession();
+      throw new Error('Session expired');
+    }
     return accessToken;
   }
   if (!accessToken || isAccessTokenExpiring(accessToken, 60_000)) {
@@ -247,6 +256,10 @@ api.interceptors.response.use(
 
     if (status === 401 && !original._retry && !isAuthSkip(url)) {
       original._retry = true;
+      if (!getStoredRefreshToken()) {
+        expireSession();
+        return Promise.reject(error);
+      }
       try {
         await refreshAccessToken();
         original.headers = original.headers || {};
@@ -268,16 +281,16 @@ export function extractError(error) {
 
   if (!error.response) {
     return (
-      'Cannot reach the identity provider. Set the public API URL (https://…/ccidp) '
-      + 'and confirm the API is on HTTPS.'
+      'Cannot reach the identity provider at https://ccidp-backend.onrender.com. '
+      + 'Confirm the API is on HTTPS and try again.'
     );
   }
 
   if (typeof data === 'string') {
     if (/<!doctype html/i.test(data) || /<html[\s>]/i.test(data)) {
       return (
-        'This site is not calling the Spring API. Set the backend URL to your public '
-        + 'CCIDP origin ending in /ccidp, then sign in again.'
+        'This site is not calling the Spring API. Set the backend URL to '
+        + 'https://ccidp-backend.onrender.com, then sign in again.'
       );
     }
     if (/invalid cors request/i.test(data)) {
@@ -315,8 +328,7 @@ export function extractError(error) {
 
   if (status === 502 || status === 504) {
     return (
-      'The public gateway cannot reach Spring on this PC (502). '
-      + 'Start CcidpApplication in IntelliJ and confirm http://127.0.0.1:8080/ccidp/actuator/health is UP.'
+      'The identity provider did not respond (502). Confirm the cloud API is running on HTTPS.'
     );
   }
 

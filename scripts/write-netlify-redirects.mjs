@@ -5,11 +5,11 @@ import { fileURLToPath } from 'node:url';
 const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const dest = path.join(publicDir, '_redirects');
 
-const raw = String(process.env.CCIDP_API_ORIGIN || 'https://git.brightgrid.in').trim().replace(/\/$/, '');
+const raw = String(process.env.CCIDP_API_ORIGIN || '').trim().replace(/\/$/, '');
 const lines = [];
 
 if (/^https:\/\//i.test(raw)) {
-  const api = raw.endsWith('/ccidp') ? raw : `${raw}/ccidp`;
+  const api = raw;
   lines.push(
     `/ccidp/*  ${api}/:splat  200!`,
     `/api/*  ${api}/api/:splat  200!`,

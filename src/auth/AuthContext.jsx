@@ -6,12 +6,13 @@ import {
   getAccessToken,
   getStoredRefreshToken,
   getStoredUser,
+  logoutIfUnauthenticated,
   profileFromLogin,
   refreshAccessToken,
   setSession,
 } from '../api/client';
 import * as authApi from '../api/auth';
-import { isAccessTokenExpiring, rolesFromAccessToken } from '../utils/jwt';
+import { isAccessTokenExpired, isAccessTokenExpiring, rolesFromAccessToken } from '../utils/jwt';
 import { normalizeRoles } from '../utils/destinations';
 
 const AuthContext = createContext(null);
@@ -52,30 +53,52 @@ export function AuthProvider({ children }) {
       setUser(null);
       setMfa(null);
     }
+    function onStorage(event) {
+      if (event.key === 'ccidp.refreshToken' && !event.newValue) {
+        expireSession();
+      }
+    }
     window.addEventListener('ccidp:session-expired', onExpired);
-    return () => window.removeEventListener('ccidp:session-expired', onExpired);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('ccidp:session-expired', onExpired);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function hydrate() {
+      if (logoutIfUnauthenticated()) {
+        if (!cancelled) {
+          setUser(null);
+          setReady(true);
+        }
+        return;
+      }
       const refreshToken = getStoredRefreshToken();
-      if (refreshToken && !getAccessToken()) {
+      if (!refreshToken) {
+        clearSession();
+        if (!cancelled) {
+          setUser(null);
+          setReady(true);
+        }
+        return;
+      }
+      if (!getAccessToken() || isAccessTokenExpired(getAccessToken())) {
         try {
           await refreshAccessToken();
           if (!cancelled) {
             setUser(withTokenRoles(getStoredUser()));
           }
         } catch {
-          if (getStoredUser()) {
-            expireSession();
-          } else {
-            clearSession();
-          }
+          expireSession();
           if (!cancelled) {
             setUser(null);
+            setReady(true);
           }
+          return;
         }
       }
       if (!cancelled && getStoredUser() && getAccessToken()) {
@@ -84,8 +107,13 @@ export function AuthProvider({ children }) {
           if (!cancelled) {
             setUser(applyMe(getStoredUser(), me));
           }
-        } catch {
-          // Keep stored profile if /me is unavailable.
+        } catch (error) {
+          if (error?.response?.status === 401) {
+            expireSession();
+            if (!cancelled) {
+              setUser(null);
+            }
+          }
         }
       }
       if (!cancelled) {
@@ -103,9 +131,15 @@ export function AuthProvider({ children }) {
     if (!user) return undefined;
 
     async function maybeRefresh() {
+      if (logoutIfUnauthenticated()) {
+        return;
+      }
+      if (!getStoredRefreshToken()) {
+        expireSession();
+        return;
+      }
       const token = getAccessToken();
-      if (!getStoredRefreshToken()) return;
-      if (token && isAccessTokenExpiring(token, 120_000)) {
+      if (!token || isAccessTokenExpired(token) || isAccessTokenExpiring(token, 120_000)) {
         try {
           await refreshAccessToken();
         } catch {
@@ -116,14 +150,27 @@ export function AuthProvider({ children }) {
       try {
         const me = await authApi.getMe();
         setUser((current) => applyMe(current || getStoredUser(), me));
-      } catch {
-        // Ignore; next interval retries.
+      } catch (error) {
+        if (error?.response?.status === 401) {
+          expireSession();
+        }
       }
     }
 
     maybeRefresh();
-    const timer = window.setInterval(maybeRefresh, 15_000);
-    return () => window.clearInterval(timer);
+    const timer = window.setInterval(maybeRefresh, 5_000);
+    function onVisible() {
+      if (document.visibilityState === 'visible') {
+        maybeRefresh();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', maybeRefresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', maybeRefresh);
+    };
   }, [user]);
 
   function completeLogin(data) {

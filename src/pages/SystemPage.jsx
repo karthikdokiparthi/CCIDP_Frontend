@@ -73,7 +73,7 @@ export function SystemPage() {
         <div className="health-row">
           <div>
             <h2 className="panel-heading">Runtime health</h2>
-            <p className="muted">Spring Actuator health via VITE_API_BASE_URL (default /ccidp/actuator/health).</p>
+            <p className="muted">Spring Actuator health from the Render API.</p>
           </div>
           <StatusBadge value={health?.status || 'UNKNOWN'} />
         </div>

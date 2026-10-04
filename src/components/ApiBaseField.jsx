@@ -16,7 +16,7 @@ export function ApiBaseField() {
     <details className="api-base-details">
       <summary>Identity provider URL</summary>
       <div className="field">
-        <label htmlFor="ccidp-api-base">Public API (ends with /ccidp)</label>
+        <label htmlFor="ccidp-api-base">Public API</label>
         <input
           id="ccidp-api-base"
           className="input"
@@ -26,7 +26,7 @@ export function ApiBaseField() {
             setValue(next);
             setStoredApiBaseUrl(next);
           }}
-          placeholder="https://your-api-host/ccidp"
+          placeholder="https://ccidp-backend.onrender.com"
           autoComplete="off"
           spellCheck={false}
         />

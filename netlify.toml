@@ -3,5 +3,4 @@
   publish = "dist"
 
 [build.environment]
-  VITE_API_BASE_URL = "https://git.brightgrid.in/ccidp"
-  CCIDP_API_ORIGIN = "https://git.brightgrid.in"
+  VITE_API_BASE_URL = "https://ccidp-backend.onrender.com"
