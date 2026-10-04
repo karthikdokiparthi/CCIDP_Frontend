@@ -332,11 +332,17 @@ p {
   font-size: 11px;
 }
 
-.nav-logout {
+.topbar-signout {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   color: var(--danger-fg);
 }
 
-.nav-logout:hover {
+.topbar-signout:hover {
   background: var(--danger-bg);
   color: var(--danger-fg);
 }
@@ -1816,5 +1822,9 @@ kbd {
     transform: none;
     width: auto;
     z-index: auto;
+  }
+
+  .topbar-signout {
+    display: inline-flex;
   }
 }

@@ -96,15 +96,6 @@ export function AppShell() {
               {item.label}
             </NavLink>
           ))}
-          <button
-            className="nav-item nav-logout"
-            type="button"
-            aria-label="Sign out"
-            title="Sign out"
-            onClick={logout}
-          >
-            <Icon name="logout" />
-          </button>
         </nav>
         <div className="sidebar-foot">BrightGrid CCIDP</div>
       </aside>
@@ -131,8 +122,14 @@ export function AppShell() {
               <div className="email">{user?.username}</div>
             </div>
             <div className="avatar">{initials(user)}</div>
-            <button className="btn btn-sm" type="button" onClick={logout}>
-              Sign out
+            <button
+              className="btn btn-sm topbar-signout"
+              type="button"
+              aria-label="Sign out"
+              title="Sign out"
+              onClick={logout}
+            >
+              <Icon name="logout" />
             </button>
           </div>
         </header>
