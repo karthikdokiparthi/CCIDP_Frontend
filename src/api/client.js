@@ -313,6 +313,13 @@ export function extractError(error) {
     );
   }
 
+  if (status === 502 || status === 504) {
+    return (
+      'The public gateway cannot reach Spring on this PC (502). '
+      + 'Start CcidpApplication in IntelliJ and confirm http://127.0.0.1:8080/ccidp/actuator/health is UP.'
+    );
+  }
+
   return error.message || 'Request failed';
 }
 
