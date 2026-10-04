@@ -96,8 +96,6 @@ export function AppShell() {
               {item.label}
             </NavLink>
           ))}
-        </nav>
-        <div className="sidebar-foot">
           <button
             className="nav-item nav-logout"
             type="button"
@@ -107,8 +105,8 @@ export function AppShell() {
           >
             <Icon name="logout" />
           </button>
-          <span>BrightGrid CCIDP</span>
-        </div>
+        </nav>
+        <div className="sidebar-foot">BrightGrid CCIDP</div>
       </aside>
       <div className="workspace">
         <header className="topbar">
