@@ -98,9 +98,14 @@ export function AppShell() {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <button className="nav-item nav-logout" type="button" onClick={logout}>
+          <button
+            className="nav-item nav-logout"
+            type="button"
+            aria-label="Sign out"
+            title="Sign out"
+            onClick={logout}
+          >
             <Icon name="logout" />
-            Sign out
           </button>
           <span>BrightGrid CCIDP</span>
         </div>
@@ -128,9 +133,6 @@ export function AppShell() {
               <div className="email">{user?.username}</div>
             </div>
             <div className="avatar">{initials(user)}</div>
-            <button className="btn btn-sm topbar-signout" type="button" onClick={logout}>
-              Sign out
-            </button>
           </div>
         </header>
         <main className="content">

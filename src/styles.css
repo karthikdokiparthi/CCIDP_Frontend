@@ -326,16 +326,30 @@ p {
 }
 
 .sidebar-foot {
-  padding: 14px 18px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px 16px;
   border-top: 1px solid var(--border);
   color: var(--text-faint);
   font-size: 11px;
 }
 
 .nav-logout {
-  display: none;
-  width: 100%;
-  margin: 0 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  color: var(--danger-fg);
+}
+
+.nav-logout:hover {
+  background: var(--danger-bg);
   color: var(--danger-fg);
 }
 
@@ -1665,27 +1679,6 @@ kbd {
   .topbar-user {
     margin-left: 0;
     gap: 8px;
-  }
-
-  .topbar-signout {
-    display: none;
-  }
-
-  .nav-logout {
-    display: flex;
-  }
-
-  .sidebar-foot {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .nav-logout:hover {
-    background: var(--danger-bg);
-    color: var(--danger-fg);
   }
 
   .user-meta,
