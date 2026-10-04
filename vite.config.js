@@ -33,8 +33,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
-      host: true,
-      allowedHosts: true,
+      host: '127.0.0.1',
       port: 5173,
       proxy: {
         '/ccidp': apiProxy(),
@@ -44,8 +43,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     preview: {
-      host: true,
-      allowedHosts: true,
+      host: '127.0.0.1',
       port: 5173,
     },
   };
