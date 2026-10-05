@@ -11,7 +11,7 @@ import {
   revokeOwnSession,
 } from '../api/auth';
 import { changeUserPassword } from '../api/admin';
-import { extractError } from '../api/client';
+import { beginVoluntaryLogout, extractError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { hasDirectoryAdminRole } from '../utils/destinations';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -368,6 +368,7 @@ export function AccountPage() {
                 message: 'This revokes every session for your account, including this console session.',
                 confirmLabel: 'Sign out all',
                 action: async () => {
+                  beginVoluntaryLogout();
                   await logoutAll();
                   await logout();
                 },

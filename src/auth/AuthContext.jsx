@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
+  beginVoluntaryLogout,
   clearSession,
   expireSession,
   extractError,
@@ -218,6 +219,7 @@ export function AuthProvider({ children }) {
         setMfa(null);
       },
       async logout() {
+        beginVoluntaryLogout();
         const refreshToken = getStoredRefreshToken();
         try {
           if (refreshToken) {

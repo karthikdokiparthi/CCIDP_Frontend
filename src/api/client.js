@@ -11,6 +11,7 @@ const API_BASE_KEY = 'ccidp.apiBaseUrl';
 let accessToken = null;
 let refreshPromise = null;
 let endingSession = false;
+let voluntaryLogout = false;
 
 function trimBase(value) {
   return String(value || '').trim().replace(/\/$/, '');
@@ -21,6 +22,7 @@ function bakedApiBase() {
 }
 
 const CLOUD_API_BASE = 'https://ccidp-backend.onrender.com';
+const LOCAL_API_BASE = 'http://127.0.0.1:8080/ccidp';
 
 /** True when the build has no absolute API URL. */
 export function needsExplicitApiHost() {
@@ -48,18 +50,30 @@ export function setStoredApiBaseUrl(value) {
   }
 }
 
+function isLocalHost(value) {
+  return /localhost|127\.0\.0\.1/i.test(String(value || ''));
+}
+
 /**
- * Public Spring origin. Render serves the API at the host root (no /ccidp).
- * Never localhost. Order: runtime script, localStorage, Vite env, then Render.
+ * Public Spring origin. On this PC the UI calls the local API so mail can use Gmail SMTP.
+ * Deployed pages call Render, which serves the API at the host root (no /ccidp).
+ * Order there: runtime script, localStorage, Vite env, then Render.
  */
 export function apiOrigin() {
+  if (typeof window !== 'undefined' && isLocalHost(window.location.hostname)) {
+    const stored = getStoredApiBaseUrl();
+    if (stored && /^https?:\/\//i.test(stored) && isLocalHost(stored)) {
+      return trimBase(stored);
+    }
+    return LOCAL_API_BASE;
+  }
   if (typeof window !== 'undefined') {
     const runtime = trimBase(window.__CCIDP_API_BASE_URL__);
-    if (runtime && /^https?:\/\//i.test(runtime) && !/localhost|127\.0\.0\.1/i.test(runtime)) {
+    if (runtime && /^https?:\/\//i.test(runtime) && !isLocalHost(runtime)) {
       return runtime;
     }
     const stored = getStoredApiBaseUrl();
-    if (stored && /^https?:\/\//i.test(stored) && !/localhost|127\.0\.0\.1/i.test(stored)) {
+    if (stored && /^https?:\/\//i.test(stored) && !isLocalHost(stored)) {
       return stored;
     }
   }
@@ -96,7 +110,13 @@ export function getStoredUser() {
   }
 }
 
+/** Sign-out is intentional. Do not treat the following 401s as an expired session. */
+export function beginVoluntaryLogout() {
+  voluntaryLogout = true;
+}
+
 export function setSession({ accessToken: token, refreshToken, user }) {
+  voluntaryLogout = false;
   if (token !== undefined) {
     accessToken = token || null;
   }
@@ -138,7 +158,7 @@ export function consumeReturnTo() {
 }
 
 export function expireSession() {
-  if (endingSession) return;
+  if (voluntaryLogout || endingSession) return;
   endingSession = true;
   const returnTo = `${window.location.pathname}${window.location.search}`;
   if (isSafeReturnPath(returnTo)) {
