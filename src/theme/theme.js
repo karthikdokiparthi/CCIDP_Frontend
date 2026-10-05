@@ -9,7 +9,7 @@ export function getStoredTheme() {
   } catch {
     // localStorage may be unavailable
   }
-  return 'dark';
+  return 'light';
 }
 
 export function applyTheme(theme) {
