@@ -13,7 +13,12 @@ export function ToastProvider({ children }) {
   const push = useCallback((type, message) => {
     if (!message) return;
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    setToasts((list) => [...list.slice(-4), { id, type, message }]);
+    setToasts((list) => {
+      if (list.some((item) => item.type === type && item.message === message)) {
+        return list;
+      }
+      return [...list.slice(-4), { id, type, message }];
+    });
     window.setTimeout(() => dismiss(id), 4200);
   }, [dismiss]);
 

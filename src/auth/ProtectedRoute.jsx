@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { peekSessionExpired } from '../api/client';
+import { isVoluntaryLogout, peekSessionExpired } from '../api/client';
 import { allowedAppPath, isSettingsPath, hasDirectoryAdminRole } from '../utils/destinations';
 import { useAuth } from './AuthContext';
 
@@ -20,7 +20,7 @@ export function ProtectedRoute({ children }) {
       <Navigate
         to="/login"
         replace
-        state={{ from: location, expired: peekSessionExpired() }}
+        state={{ from: location, expired: !isVoluntaryLogout() && peekSessionExpired() }}
       />
     );
   }

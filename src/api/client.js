@@ -23,6 +23,8 @@ function bakedApiBase() {
 
 const CLOUD_API_BASE = 'https://ccidp-backend.onrender.com';
 const LOCAL_API_BASE = 'http://127.0.0.1:8080/ccidp';
+const INTERNAL_API_PORT = '8080';
+const INTERNAL_API_PATH = '/ccidp';
 
 /** True when the build has no absolute API URL. */
 export function needsExplicitApiHost() {
@@ -54,18 +56,47 @@ function isLocalHost(value) {
   return /localhost|127\.0\.0\.1/i.test(String(value || ''));
 }
 
+function isPrivateIpv4(host) {
+  const parts = String(host || '').split('.');
+  if (parts.length !== 4) return false;
+  const numbers = parts.map((part) => Number(part));
+  if (numbers.some((value) => !Number.isInteger(value) || value < 0 || value > 255)) {
+    return false;
+  }
+  const [a, b] = numbers;
+  if (a === 10) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  return a === 169 && b === 254;
+}
+
+function isInternalHost(host) {
+  return isLocalHost(host) || isPrivateIpv4(host);
+}
+
+function internalApiBase(host) {
+  if (isLocalHost(host)) return LOCAL_API_BASE;
+  return `http://${host}:${INTERNAL_API_PORT}${INTERNAL_API_PATH}`;
+}
+
 /**
- * Public Spring origin. On this PC the UI calls the local API so mail can use Gmail SMTP.
- * Deployed pages call Render, which serves the API at the host root (no /ccidp).
- * Order there: runtime script, localStorage, Vite env, then Render.
+ * On this PC, or when the page is opened by a private server IP, call the API on
+ * that same machine. Deployed pages call Render, which serves the API at the host
+ * root (no /ccidp). Order there: runtime script, localStorage, Vite env, then Render.
  */
 export function apiOrigin() {
-  if (typeof window !== 'undefined' && isLocalHost(window.location.hostname)) {
+  if (typeof window !== 'undefined' && isInternalHost(window.location.hostname)) {
     const stored = getStoredApiBaseUrl();
-    if (stored && /^https?:\/\//i.test(stored) && isLocalHost(stored)) {
-      return trimBase(stored);
+    if (stored && /^https?:\/\//i.test(stored)) {
+      try {
+        if (isInternalHost(new URL(stored).hostname)) {
+          return trimBase(stored);
+        }
+      } catch {
+        /* ignore a stored value that is not a URL */
+      }
     }
-    return LOCAL_API_BASE;
+    return internalApiBase(window.location.hostname);
   }
   if (typeof window !== 'undefined') {
     const runtime = trimBase(window.__CCIDP_API_BASE_URL__);
@@ -113,10 +144,20 @@ export function getStoredUser() {
 /** Sign-out is intentional. Do not treat the following 401s as an expired session. */
 export function beginVoluntaryLogout() {
   voluntaryLogout = true;
+  sessionStorage.removeItem(EXPIRED_KEY);
+  sessionStorage.removeItem(RETURN_KEY);
+}
+
+export function isVoluntaryLogout() {
+  return voluntaryLogout;
+}
+
+export function endVoluntaryLogout() {
+  voluntaryLogout = false;
 }
 
 export function setSession({ accessToken: token, refreshToken, user }) {
-  voluntaryLogout = false;
+  if (voluntaryLogout) return;
   if (token !== undefined) {
     accessToken = token || null;
   }
@@ -301,8 +342,8 @@ export function extractError(error) {
 
   if (!error.response) {
     return (
-      'Cannot reach the identity provider at https://ccidp-backend.onrender.com. '
-      + 'Confirm the API is on HTTPS and try again.'
+      `Cannot reach the identity provider at ${apiOrigin()}. `
+      + 'Confirm the API is running and try again.'
     );
   }
 

@@ -2,7 +2,9 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   beginVoluntaryLogout,
   clearSession,
+  endVoluntaryLogout,
   expireSession,
+  isVoluntaryLogout,
   extractError,
   getAccessToken,
   getStoredRefreshToken,
@@ -132,7 +134,7 @@ export function AuthProvider({ children }) {
     if (!user) return undefined;
 
     async function maybeRefresh() {
-      if (logoutIfUnauthenticated()) {
+      if (isVoluntaryLogout() || logoutIfUnauthenticated()) {
         return;
       }
       if (!getStoredRefreshToken()) {
@@ -150,8 +152,10 @@ export function AuthProvider({ children }) {
       }
       try {
         const me = await authApi.getMe();
+        if (isVoluntaryLogout()) return;
         setUser((current) => applyMe(current || getStoredUser(), me));
       } catch (error) {
+        if (isVoluntaryLogout()) return;
         if (error?.response?.status === 401) {
           expireSession();
         }
@@ -175,6 +179,7 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   function completeLogin(data) {
+    endVoluntaryLogout();
     const profile = profileFromLogin(data);
     setSession({
       accessToken: data.accessToken,
@@ -185,7 +190,10 @@ export function AuthProvider({ children }) {
     setMfa(null);
     authApi
       .getMe()
-      .then((me) => setUser(applyMe(profile, me)))
+      .then((me) => {
+        if (isVoluntaryLogout()) return;
+        setUser(applyMe(profile, me));
+      })
       .catch(() => {});
   }
 
@@ -221,16 +229,18 @@ export function AuthProvider({ children }) {
       async logout() {
         beginVoluntaryLogout();
         const refreshToken = getStoredRefreshToken();
+        clearSession();
+        setUser(null);
+        setMfa(null);
         try {
           if (refreshToken) {
             await authApi.logout(refreshToken);
           }
         } catch {
-          // Session is cleared locally either way.
+          // Session is already cleared locally.
         }
-        clearSession();
-        setUser(null);
-        setMfa(null);
+        sessionStorage.removeItem('ccidp.sessionExpired');
+        sessionStorage.removeItem('ccidp.returnTo');
       },
     }),
     [user, ready, mfa]

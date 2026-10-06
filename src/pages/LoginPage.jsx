@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
-import { consumeReturnTo, consumeSessionExpired, peekReturnTo, peekSessionExpired } from '../api/client';
+import { consumeReturnTo, consumeSessionExpired, isVoluntaryLogout, peekReturnTo, peekSessionExpired } from '../api/client';
 import { extractError, useAuth } from '../auth/AuthContext';
 import { AuthCard } from '../components/AuthCard';
 import { allowedAppPath, homePath } from '../utils/destinations';
@@ -16,7 +16,7 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [expiredNotice, setExpiredNotice] = useState(
-    () => Boolean(location.state?.expired) || peekSessionExpired()
+    () => !isVoluntaryLogout() && (Boolean(location.state?.expired) || peekSessionExpired())
   );
   const fromPath = pathFromLocation(location.state?.from);
   const requested = isSafeReturnPath(fromPath) ? fromPath : peekReturnTo() || '';
